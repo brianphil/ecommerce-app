@@ -2,7 +2,7 @@
 
 A comprehensive Django-based e-commerce backend system with hierarchical product categories, order management, OpenID Connect authentication, and integrated SMS/Email notifications.
 
-## 🚀 Features
+## Features
 
 ### Core Functionality
 
@@ -29,7 +29,7 @@ A comprehensive Django-based e-commerce backend system with hierarchical product
 - **CI/CD**: GitHub Actions pipeline with automated testing and deployment
 - **Containerization**: Docker and Kubernetes deployment ready
 
-## 📋 Requirements
+## Requirements
 
 - Python 3.11+
 - PostgreSQL 13+
@@ -37,7 +37,7 @@ A comprehensive Django-based e-commerce backend system with hierarchical product
 - Docker & Docker Compose (for containerized deployment)
 - Kubernetes (for production deployment)
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### Local Development
 
@@ -117,7 +117,7 @@ A comprehensive Django-based e-commerce backend system with hierarchical product
    docker-compose exec web python manage.py loaddata fixtures/initial_data.json
    ```
 
-## 🌐 API Documentation
+## API Documentation
 
 Once the server is running, access the API documentation at:
 
@@ -125,7 +125,7 @@ Once the server is running, access the API documentation at:
 - **ReDoc**: http://localhost:8000/redoc/
 - **Raw Schema**: http://localhost:8000/swagger.json
 
-## 🔑 Authentication
+## Authentication
 
 The API uses OAuth2 with OpenID Connect for authentication.
 
@@ -167,7 +167,7 @@ Include the token in the Authorization header:
 Authorization: Bearer your-access-token
 ```
 
-## 📚 API Endpoints
+## API Endpoints
 
 ### Authentication
 
@@ -203,7 +203,7 @@ Authorization: Bearer your-access-token
 - `DELETE /api/v1/orders/cart/remove_item/` - Remove item from cart
 - `DELETE /api/v1/orders/cart/clear/` - Clear cart
 
-## 🗂️ Database Schema
+## Database Schema
 
 ### Key Models
 
@@ -238,7 +238,7 @@ class Order(Model):
     # Complete order management
 ```
 
-## 📱 Notifications
+## Notifications
 
 ### SMS Notifications (Africa's Talking)
 
@@ -274,7 +274,7 @@ ADMIN_EMAIL=admin@yourstore.com
 - Order notifications to administrators
 - Low stock alerts
 
-## 🧪 Testing
+## Testing
 
 ### Run Tests
 
@@ -294,7 +294,7 @@ coverage html  # Generate HTML report
 - **API Tests**: Endpoint testing with authentication
 - **Integration Tests**: Order flow and notification testing
 
-## 🚀 Deployment
+## Deployment
 
 ### Docker Production
 
@@ -342,7 +342,7 @@ coverage html  # Generate HTML report
 | `EMAIL_HOST_PASSWORD`      | SMTP email password              | No       |
 | `ADMIN_EMAIL`              | Administrator email              | Yes      |
 
-## 📊 Performance & Monitoring
+## Performance & Monitoring
 
 ### Database Optimizations
 
@@ -362,7 +362,7 @@ coverage html  # Generate HTML report
 - Celery monitoring for background tasks
 - Health check endpoints for Kubernetes
 
-## 🔐 Security Features
+## Security Features
 
 ### Authentication & Authorization
 
@@ -382,7 +382,7 @@ coverage html  # Generate HTML report
 - CORS configuration
 - Secure headers middleware
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -397,11 +397,11 @@ coverage html  # Generate HTML report
 - Update documentation for new features
 - Use conventional commit messages
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## Support
 
 For support and questions:
 
@@ -409,7 +409,7 @@ For support and questions:
 - Email: support@yourstore.com
 - Documentation: [Project Wiki](https://github.com/your-username/ecommerce-backend/wiki)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Django REST Framework** for the excellent API framework
 - **Africa's Talking** for SMS gateway services
