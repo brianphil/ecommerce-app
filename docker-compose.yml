@@ -1,0 +1,123 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-dev-secret-key-change-in-production
+      - DB_HOST=db
+      - DB_NAME=ecommerce_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - AFRICAS_TALKING_USERNAME=sandbox
+      - AFRICAS_TALKING_API_KEY=your_api_key_here
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_HOST_USER=your_email@gmail.com
+      - EMAIL_HOST_PASSWORD=your_app_password
+      - ADMIN_EMAIL=admin@ecommerce.com
+    volumes:
+      - .:/app
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py loaddata fixtures/initial_data.json &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --reload ecommerce.wsgi:application"
+
+  celery:
+    build: .
+    restart: unless-stopped
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-dev-secret-key-change-in-production
+      - DB_HOST=db
+      - DB_NAME=ecommerce_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - AFRICAS_TALKING_USERNAME=sandbox
+      - AFRICAS_TALKING_API_KEY=your_api_key_here
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_HOST_USER=your_email@gmail.com
+      - EMAIL_HOST_PASSWORD=your_app_password
+      - ADMIN_EMAIL=admin@ecommerce.com
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    command: celery -A ecommerce worker -l info
+
+  celery-beat:
+    build: .
+    restart: unless-stopped
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-dev-secret-key-change-in-production
+      - DB_HOST=db
+      - DB_NAME=ecommerce_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_URL=redis://redis:6379/0
+      - AFRICAS_TALKING_USERNAME=sandbox
+      - AFRICAS_TALKING_API_KEY=your_api_key_here
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_HOST_USER=your_email@gmail.com
+      - EMAIL_HOST_PASSWORD=your_app_password
+      - ADMIN_EMAIL=admin@ecommerce.com
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    command: celery -A ecommerce beat -l info
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_files:
+  static_files:
