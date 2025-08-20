@@ -24,6 +24,27 @@ class Customer(AbstractUser):
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
     is_verified = models.BooleanField(_('is verified'), default=False)
 
+    # Fix the reverse accessor clash
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name=_('groups'),
+        blank=True,
+        help_text=_(
+            'The groups this user belongs to. A user will get all permissions '
+            'granted to each of their groups.'
+        ),
+        related_name='customers',  # Changed from default 'user_set'
+        related_query_name='customer',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name=_('user permissions'),
+        blank=True,
+        help_text=_('Specific permissions for this user.'),
+        related_name='customers',  # Changed from default 'user_set'
+        related_query_name='customer',
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 

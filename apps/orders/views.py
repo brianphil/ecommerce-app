@@ -14,7 +14,67 @@ from .serializers import (
     OrderListSerializer, OrderDetailSerializer, OrderCreateSerializer,
     OrderUpdateSerializer, CartSerializer, CartItemSerializer, AddToCartSerializer
 )
-from .tasks import send_order_notifications
+
+# Import the simplified notification function
+from apps.notifications.sms import send_order_confirmation_sms
+from apps.notifications.email import send_order_notification_email, send_customer_order_confirmation_email
+
+
+def send_order_notifications(order_id):
+    """
+    Send notifications when an order is placed.
+    Simplified version without Celery for Windows development.
+    """
+    try:
+        order = Order.objects.select_related('customer').prefetch_related(
+            'items__product'
+        ).get(id=order_id)
+        
+        # Prepare order data
+        order_data = {
+            'order_number': order.order_number,
+            'customer_id': order.customer.id,
+            'subtotal': str(order.subtotal),
+            'tax_amount': str(order.tax_amount),
+            'shipping_cost': str(order.shipping_cost),
+            'total_amount': str(order.total_amount),
+            'status': order.status,
+            'billing_first_name': order.billing_first_name,
+            'billing_last_name': order.billing_last_name,
+            'billing_email': order.billing_email,
+            'billing_phone': order.billing_phone,
+            'billing_address': order.billing_address,
+            'billing_city': order.billing_city,
+            'billing_country': order.billing_country,
+            'items': []
+        }
+        
+        # Add order items
+        for item in order.items.all():
+            order_data['items'].append({
+                'product_name': item.product_name,
+                'quantity': item.quantity,
+                'unit_price': str(item.unit_price),
+                'total_price': str(item.total_price)
+            })
+        
+        # Send SMS notification (mock)
+        if order.customer.phone_number:
+            sms_result = send_order_confirmation_sms(
+                phone_number=order.customer.phone_number,
+                order_number=order.order_number,
+                total_amount=str(order.total_amount)
+            )
+            print(f"SMS Result: {sms_result}")
+        
+        # Send email notifications (console)
+        send_customer_order_confirmation_email(order_data, order.customer.email)
+        send_order_notification_email(order_data, 'admin@localhost')
+        
+        print(f"Order notifications processed for order {order.order_number}")
+        
+    except Exception as e:
+        print(f"Error sending notifications for order {order_id}: {str(e)}")
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -63,8 +123,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         try:
             order = serializer.save()
             
-            # Send notifications asynchronously
-            send_order_notifications.delay(order.id)
+            # Send notifications immediately (no Celery for Windows)
+            send_order_notifications(order.id)
             
             response_serializer = OrderDetailSerializer(order, context={'request': request})
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -100,6 +160,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.save()
             
             # Create status history
+            from .models import OrderStatusHistory
             OrderStatusHistory.objects.create(
                 order=order,
                 status='cancelled',
@@ -117,7 +178,18 @@ class OrderViewSet(viewsets.ModelViewSet):
                 'order_number': openapi.Schema(type=openapi.TYPE_STRING),
                 'status': openapi.Schema(type=openapi.TYPE_STRING),
                 'tracking_number': openapi.Schema(type=openapi.TYPE_STRING),
-                'status_history': openapi.Schema(type=openapi.TYPE_ARRAY)
+                'status_history': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(
+                        type=openapi.TYPE_OBJECT,
+                        properties={
+                            'status': openapi.Schema(type=openapi.TYPE_STRING),
+                            'status_display': openapi.Schema(type=openapi.TYPE_STRING),
+                            'comment': openapi.Schema(type=openapi.TYPE_STRING),
+                            'created_at': openapi.Schema(type=openapi.TYPE_STRING)
+                        }
+                    )
+                )
             }
         )}
     )

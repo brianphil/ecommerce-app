@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.contrib.auth import authenticate, login, logout
-from oauth2_provider.models import Application, AccessToken
+from django.contrib.auth import authenticate
+from oauth2_provider.models import Application, AccessToken, RefreshToken
+from django.utils import timezone
+from datetime import timedelta
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
@@ -19,11 +21,22 @@ class CustomerViewSet(viewsets.ModelViewSet):
     """
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Allow public access for registration and login.
+        """
+        if self.action in ['register', 'login']:
+            permission_classes = [permissions.AllowAny]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         """Return only the current user's data."""
-        return Customer.objects.filter(id=self.request.user.id)
+        if self.request.user.is_authenticated:
+            return Customer.objects.filter(id=self.request.user.id)
+        return Customer.objects.none()
 
     def get_object(self):
         """Return the current user."""
@@ -38,16 +51,32 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def register(self, request):
         """Register a new customer."""
         serializer = CustomerRegistrationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         
-        customer = serializer.save()
+        if not serializer.is_valid():
+            return Response(
+                {'errors': serializer.errors}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
-        # Create customer profile
-        CustomerProfile.objects.create(customer=customer)
-        
-        # Return customer data
-        customer_serializer = CustomerSerializer(customer)
-        return Response(customer_serializer.data, status=status.HTTP_201_CREATED)
+        try:
+            customer = serializer.save()
+            
+            # Create customer profile
+            CustomerProfile.objects.get_or_create(customer=customer)
+            
+            # Return customer data without sensitive info
+            customer_serializer = CustomerSerializer(customer)
+            
+            return Response({
+                'message': 'Registration successful',
+                'customer': customer_serializer.data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Registration failed: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @swagger_auto_schema(
         operation_description="Customer login",
@@ -69,52 +98,87 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def login(self, request):
         """Customer login with OAuth2 token generation."""
         serializer = CustomerLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        
+        if not serializer.is_valid():
+            return Response(
+                {'errors': serializer.errors}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
         
-        # Authenticate user
-        customer = authenticate(request, username=email, password=password)
-        
-        if customer and customer.is_active:
-            # Get or create OAuth2 application
+        try:
+            # Find customer by email
             try:
-                application = Application.objects.get(name='E-commerce API')
-            except Application.DoesNotExist:
-                application = Application.objects.create(
-                    name='E-commerce API',
-                    client_type=Application.CLIENT_CONFIDENTIAL,
-                    authorization_grant_type=Application.GRANT_PASSWORD,
+                customer = Customer.objects.get(email=email)
+            except Customer.DoesNotExist:
+                return Response(
+                    {'error': 'Invalid email or password'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            # Create access token
-            from oauth2_provider.models import AccessToken, RefreshToken
-            from datetime import timedelta
-            from django.utils import timezone
+            # Check if customer is active
+            if not customer.is_active:
+                return Response(
+                    {'error': 'Account is disabled'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
             
-            # Delete existing tokens
-            AccessToken.objects.filter(user=customer, application=application).delete()
-            RefreshToken.objects.filter(user=customer, application=application).delete()
+            # Authenticate with email as username
+            authenticated_user = authenticate(
+                request=request,
+                username=customer.username,  # Use username for authentication
+                password=password
+            )
             
-            # Create new tokens
+            if not authenticated_user:
+                # Try authenticating with email directly
+                authenticated_user = authenticate(
+                    request=request,
+                    username=email,
+                    password=password
+                )
+            
+            if not authenticated_user:
+                return Response(
+                    {'error': 'Invalid email or password'}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Get or create OAuth2 application
+            application, created = Application.objects.get_or_create(
+                name='E-commerce API',
+                defaults={
+                    'client_type': Application.CLIENT_PUBLIC,
+                    'authorization_grant_type': Application.GRANT_PASSWORD,
+                }
+            )
+            
+            # Delete existing tokens for this user
+            AccessToken.objects.filter(user=authenticated_user, application=application).delete()
+            RefreshToken.objects.filter(user=authenticated_user, application=application).delete()
+            
+            # Create new access token
+            expires = timezone.now() + timedelta(seconds=3600)
             access_token = AccessToken.objects.create(
-                user=customer,
+                user=authenticated_user,
                 application=application,
                 token=AccessToken.generate_token(),
-                expires=timezone.now() + timedelta(seconds=3600),
+                expires=expires,
                 scope='read write'
             )
             
+            # Create refresh token
             refresh_token = RefreshToken.objects.create(
-                user=customer,
+                user=authenticated_user,
                 application=application,
                 token=RefreshToken.generate_token(),
                 access_token=access_token
             )
             
             # Return token response
-            customer_serializer = CustomerSerializer(customer)
+            customer_serializer = CustomerSerializer(authenticated_user)
             return Response({
                 'access_token': access_token.token,
                 'refresh_token': refresh_token.token,
@@ -123,10 +187,11 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 'scope': 'read write',
                 'customer': customer_serializer.data
             })
-        else:
+            
+        except Exception as e:
             return Response(
-                {'error': 'Invalid credentials'},
-                status=status.HTTP_401_UNAUTHORIZED
+                {'error': f'Login failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @swagger_auto_schema(
@@ -140,25 +205,28 @@ class CustomerViewSet(viewsets.ModelViewSet):
             auth_header = request.META.get('HTTP_AUTHORIZATION', '')
             if auth_header.startswith('Bearer '):
                 token = auth_header.split(' ')[1]
-                access_token = AccessToken.objects.get(token=token)
-                
-                # Delete associated refresh token
-                if hasattr(access_token, 'refresh_token'):
-                    access_token.refresh_token.delete()
-                
-                # Delete access token
-                access_token.delete()
-                
-                return Response({'message': 'Successfully logged out'})
+                try:
+                    access_token = AccessToken.objects.get(token=token)
+                    
+                    # Delete associated refresh token
+                    RefreshToken.objects.filter(access_token=access_token).delete()
+                    
+                    # Delete access token
+                    access_token.delete()
+                    
+                    return Response({'message': 'Successfully logged out'})
+                    
+                except AccessToken.DoesNotExist:
+                    return Response({'message': 'Token already invalid'})
             else:
                 return Response(
                     {'error': 'No valid token provided'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        except AccessToken.DoesNotExist:
+        except Exception as e:
             return Response(
-                {'error': 'Invalid token'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': f'Logout failed: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     @swagger_auto_schema(
@@ -167,6 +235,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def profile(self, request):
         """Get current customer profile."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         serializer = CustomerSerializer(request.user)
         return Response(serializer.data)
 
@@ -177,6 +251,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['patch'])
     def update_profile(self, request):
         """Update customer profile."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         serializer = CustomerSerializer(
             request.user,
             data=request.data,
@@ -193,6 +273,12 @@ class CustomerViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def change_password(self, request):
         """Change customer password."""
+        if not request.user.is_authenticated:
+            return Response(
+                {'error': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         serializer = PasswordChangeSerializer(
             data=request.data,
             context={'request': request}
@@ -209,35 +295,27 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Password changed successfully'})
 
     @swagger_auto_schema(
-        operation_description="Verify customer account",
-        manual_parameters=[
-            openapi.Parameter(
-                'verification_code',
-                openapi.IN_QUERY,
-                description="Email verification code",
-                type=openapi.TYPE_STRING,
-                required=True
-            )
-        ]
+        operation_description="Test authentication",
+        responses={200: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'message': openapi.Schema(type=openapi.TYPE_STRING),
+                'user': CustomerSerializer
+            }
+        )}
     )
-    @action(detail=False, methods=['post'])
-    def verify_email(self, request):
-        """Verify customer email address."""
-        verification_code = request.query_params.get('verification_code')
-        
-        if not verification_code:
-            return Response(
-                {'error': 'Verification code is required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # In a real implementation, you would verify the code against
-        # a stored verification token
-        customer = request.user
-        customer.is_verified = True
-        customer.save()
-        
-        return Response({'message': 'Email verified successfully'})
+    @action(detail=False, methods=['get'])
+    def test_auth(self, request):
+        """Test endpoint to verify authentication is working."""
+        if request.user.is_authenticated:
+            return Response({
+                'message': 'Authentication working',
+                'user': CustomerSerializer(request.user).data
+            })
+        else:
+            return Response({
+                'message': 'Not authenticated'
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CustomerProfileViewSet(viewsets.ModelViewSet):
@@ -249,10 +327,15 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return only the current user's profile."""
-        return CustomerProfile.objects.filter(customer=self.request.user)
+        if self.request.user.is_authenticated:
+            return CustomerProfile.objects.filter(customer=self.request.user)
+        return CustomerProfile.objects.none()
 
     def get_object(self):
         """Get or create customer profile."""
+        if not self.request.user.is_authenticated:
+            return None
+        
         profile, created = CustomerProfile.objects.get_or_create(
             customer=self.request.user
         )
@@ -265,13 +348,17 @@ class CustomerProfileViewSet(viewsets.ModelViewSet):
     def list(self, request):
         """Get current customer profile."""
         profile = self.get_object()
-        serializer = self.get_serializer(profile)
-        return Response(serializer.data)
+        if profile:
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+        return Response({'error': 'Profile not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request):
         """Update or create customer profile."""
         profile = self.get_object()
-        serializer = self.get_serializer(profile, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        if profile:
+            serializer = self.get_serializer(profile, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)

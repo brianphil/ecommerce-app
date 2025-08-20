@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-commerce Store</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: bold;
+      }
+
+      .auth-section {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      button {
+        background: #fff;
+        color: #667eea;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      button:hover {
+        background: #f0f0f0;
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: #28a745;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #218838;
+      }
+
+      .search-bar {
+        margin: 2rem 0;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="email"],
+      input[type="password"],
+      select {
+        padding: 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1rem;
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .category-nav {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .category-nav h3 {
+        margin-bottom: 1rem;
+        color: #667eea;
+      }
+
+      .category-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .category-item {
+        background: #f8f9fa;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .category-item:hover,
+      .category-item.active {
+        background: #667eea;
+        color: white;
+      }
+
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+      }
+
+      .product-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .product-image {
+        height: 200px;
+        background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        font-size: 3rem;
+      }
+
+      .product-info {
+        padding: 1.5rem;
+      }
+
+      .product-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+      }
+
+      .product-price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+        margin-bottom: 0.5rem;
+      }
+
+      .product-category {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 1rem;
+      }
+
+      .product-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .btn-cart {
+        flex: 1;
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 0.7rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s ease;
+      }
+
+      .btn-cart:hover {
+        background: #5a6fd8;
+      }
+
+      .auth-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
+
+      .modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 400px;
+      }
+
+      .form-group {
+        margin-bottom: 1rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 0.7rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 5px;
+        margin: 1rem 0;
+      }
+
+      .cart-summary {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+      }
+
+      @media (max-width: 768px) {
+        .header-content {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .search-bar {
+          flex-direction: column;
+        }
+
+        .filters {
+          flex-direction: column;
+        }
+
+        .products-grid {
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 1rem;
+        }
+
+        .cart-summary {
+          position: static;
+          margin: 1rem 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="header-content">
+          <div class="logo">🛒 E-commerce Store</div>
+          <div class="auth-section">
+            <span id="user-info" style="display: none">Welcome, <span id="username"></span>!</span>
+            <button id="login-btn">Login</button>
+            <button id="register-btn">Register</button>
+            <button id="logout-btn" style="display: none">Logout</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="Search products..." />
+        <button onclick="searchProducts()">Search</button>
+        <select id="sort-select" onchange="loadProducts()">
+          <option value="-created_at">Newest First</option>
+          <option value="name">Name A-Z</option>
+          <option value="-name">Name Z-A</option>
+          <option value="price">Price Low-High</option>
+          <option value="-price">Price High-Low</option>
+        </select>
+      </div>
+
+      <div class="filters">
+        <input type="number" id="min-price" placeholder="Min Price" onchange="loadProducts()" />
+        <input type="number" id="max-price" placeholder="Max Price" onchange="loadProducts()" />
+        <select id="stock-filter" onchange="loadProducts()">
+          <option value="">All Products</option>
+          <option value="in_stock">In Stock Only</option>
+          <option value="featured">Featured Only</option>
+        </select>
+      </div>
+
+      <div class="category-nav">
+        <h3>📂 Categories</h3>
+        <div class="category-list" id="categories-list">
+          <div class="category-item active" data-category="">All Products</div>
+        </div>
+      </div>
+
+      <div id="loading" class="loading">Loading products...</div>
+      <div id="error-message" class="error" style="display: none"></div>
+
+      <div class="products-grid" id="products-grid"></div>
+    </main>
+
+    <div class="cart-summary" id="cart-summary" style="display: none">
+      <h4>🛒 Cart</h4>
+      <div id="cart-items">0 items</div>
+      <div id="cart-total">Total: KES 0</div>
+      <button class="btn-primary" onclick="viewCart()">View Cart</button>
+    </div>
+
+    <!-- Authentication Modal -->
+    <div class="auth-modal" id="auth-modal">
+      <div class="modal-content">
+        <h3 id="auth-title">Login</h3>
+        <form id="auth-form">
+          <div class="form-group" id="username-group" style="display: none">
+            <label>Username:</label>
+            <input type="text" id="auth-username" required />
+          </div>
+          <div class="form-group">
+            <label>Email:</label>
+            <input type="email" id="auth-email" required />
+          </div>
+          <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="auth-password" required />
+          </div>
+          <div class="form-group" id="confirm-group" style="display: none">
+            <label>Confirm Password:</label>
+            <input type="password" id="auth-confirm" />
+          </div>
+          <div class="form-group" id="name-group" style="display: none">
+            <label>First Name:</label>
+            <input type="text" id="auth-firstname" />
+            <label>Last Name:</label>
+            <input type="text" id="auth-lastname" />
+          </div>
+          <button type="submit" class="btn-primary">Submit</button>
+          <button type="button" onclick="closeModal()">Cancel</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // ===== CONFIGURATION =====
+      const API_BASE = "http://127.0.0.1:8000/api/v1";
+
+      // ===== GLOBAL VARIABLES =====
+      let currentUser = null;
+      let authToken = null;
+      let cart = [];
+
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 App starting...");
+
+        // Load saved data from browser storage
+        loadSavedAuth();
+        loadSavedCart();
+
+        // Update the user interface
+        updateAuthUI();
+        updateCartSummary();
+
+        // Load data from API
+        loadCategories();
+        loadProducts();
+
+        // Set up event listeners
+        setupEventListeners();
+
+        console.log("✅ App ready!");
+      });
+
+      function loadSavedAuth() {
+        // Check if user was previously logged in
+        const savedToken = localStorage.getItem("authToken");
+        const savedUser = localStorage.getItem("currentUser");
+
+        if (savedToken && savedUser) {
+          authToken = savedToken;
+          currentUser = JSON.parse(savedUser);
+          console.log("📋 Found saved login for:", currentUser.email);
+        }
+      }
+
+      function updateAuthUI() {
+        const loginBtn = document.getElementById("login-btn");
+        const registerBtn = document.getElementById("register-btn");
+        const logoutBtn = document.getElementById("logout-btn");
+        const userInfo = document.getElementById("user-info");
+        const username = document.getElementById("username");
+
+        if (currentUser) {
+          // User is logged in
+          loginBtn.style.display = "none";
+          registerBtn.style.display = "none";
+          logoutBtn.style.display = "block";
+          userInfo.style.display = "block";
+          username.textContent = currentUser.first_name || currentUser.email;
+        } else {
+          // User is not logged in
+          loginBtn.style.display = "block";
+          registerBtn.style.display = "block";
+          logoutBtn.style.display = "none";
+          userInfo.style.display = "none";
+        }
+      }
+
+      function showLogin() {
+        console.log("📱 Opening login form");
+        document.getElementById("auth-title").textContent = "Login";
+        document.getElementById("username-group").style.display = "none";
+        document.getElementById("confirm-group").style.display = "none";
+        document.getElementById("name-group").style.display = "none";
+        document.getElementById("auth-modal").style.display = "block";
+
+        // Clear the form
+        document.getElementById("auth-form").reset();
+
+        // Set up form submission
+        document.getElementById("auth-form").onsubmit = handleLogin;
+      }
+
+      function showRegister() {
+        console.log("📝 Opening registration form");
+        document.getElementById("auth-title").textContent = "Register";
+        document.getElementById("username-group").style.display = "block";
+        document.getElementById("confirm-group").style.display = "block";
+        document.getElementById("name-group").style.display = "block";
+        document.getElementById("auth-modal").style.display = "block";
+
+        // Clear the form
+        document.getElementById("auth-form").reset();
+
+        // Set up form submission
+        document.getElementById("auth-form").onsubmit = handleRegister;
+      }
+
+      function closeModal() {
+        document.getElementById("auth-modal").style.display = "none";
+        document.getElementById("auth-form").reset();
+      }
+
+      async function handleLogin(event) {
+        event.preventDefault(); // Stop form from submitting normally
+
+        const email = document.getElementById("auth-email").value.trim();
+        const password = document.getElementById("auth-password").value;
+
+        console.log("🔑 Attempting login for:", email);
+
+        if (!email || !password) {
+          showMessage("Please enter both email and password", "error");
+          return;
+        }
+
+        try {
+          // Send login request to API
+          const response = await fetch(`${API_BASE}/auth/customers/login/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          console.log("📡 Login response status:", response.status);
+
+          const data = await response.json();
+          console.log("📄 Login response data:", data);
+
+          if (response.ok && data.access_token) {
+            // Login successful!
+            authToken = data.access_token;
+            currentUser = data.customer;
+
+            // Save to browser storage
+            localStorage.setItem("authToken", authToken);
+            localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+            // Update UI
+            updateAuthUI();
+            closeModal();
+            showMessage("Login successful! Welcome back!", "success");
+
+            console.log("✅ Login successful for:", currentUser.email);
+          } else {
+            // Login failed
+            const errorMsg = data.error || "Login failed";
+            console.error("❌ Login failed:", errorMsg);
+            showMessage(errorMsg, "error");
+          }
+        } catch (error) {
+          console.error("🌐 Network error during login:", error);
+          showMessage("Connection error. Is the backend running?", "error");
+        }
+      }
+
+      async function handleRegister(event) {
+        event.preventDefault(); // Stop form from submitting normally
+
+        const username = document.getElementById("auth-username").value.trim();
+        const email = document.getElementById("auth-email").value.trim();
+        const password = document.getElementById("auth-password").value;
+        const confirm = document.getElementById("auth-confirm").value;
+        const firstName = document.getElementById("auth-firstname").value.trim();
+        const lastName = document.getElementById("auth-lastname").value.trim();
+
+        console.log("📝 Attempting registration for:", email);
+
+        // Check all fields are filled
+        if (!username || !email || !password || !firstName || !lastName) {
+          showMessage("Please fill in all fields", "error");
+          return;
+        }
+
+        // Check passwords match
+        if (password !== confirm) {
+          showMessage("Passwords do not match", "error");
+          return;
+        }
+
+        try {
+          // Send registration request to API
+          const response = await fetch(`${API_BASE}/auth/customers/register/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              username,
+              email,
+              password,
+              password_confirm: confirm,
+              first_name: firstName,
+              last_name: lastName,
+            }),
+          });
+
+          console.log("📡 Registration response status:", response.status);
+
+          const data = await response.json();
+          console.log("📄 Registration response data:", data);
+
+          if (response.ok) {
+            // Registration successful!
+            closeModal();
+            showMessage("Registration successful! Please login with your new account.", "success");
+            console.log("✅ Registration successful for:", email);
+          } else {
+            // Registration failed
+            let errorMsg = "Registration failed";
+
+            if (data.errors) {
+              // Handle field-specific errors
+              const errors = [];
+              for (const [field, messages] of Object.entries(data.errors)) {
+                if (Array.isArray(messages)) {
+                  errors.push(...messages);
+                } else {
+                  errors.push(messages);
+                }
+              }
+              errorMsg = errors.join(", ");
+            } else if (data.error) {
+              errorMsg = data.error;
+            }
+
+            console.error("❌ Registration failed:", errorMsg);
+            showMessage(errorMsg, "error");
+          }
+        } catch (error) {
+          console.error("🌐 Network error during registration:", error);
+          showMessage("Connection error. Is the backend running?", "error");
+        }
+      }
+
+      function logout() {
+        console.log("👋 Logging out...");
+
+        // Clear all stored data
+        authToken = null;
+        currentUser = null;
+        cart = [];
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("cart");
+
+        // Update UI
+        updateAuthUI();
+        updateCartSummary();
+        showMessage("Logged out successfully", "success");
+
+        console.log("✅ Logout completed");
+      }
+
+      // ===== 3. PRODUCT FUNCTIONS =====
+
+      async function loadCategories() {
+        console.log("📂 Loading categories...");
+
+        try {
+          const response = await fetch(`${API_BASE}/products/categories/`);
+          const data = await response.json();
+
+          const categoriesList = document.getElementById("categories-list");
+          categoriesList.innerHTML =
+            '<div class="category-item active" data-category="">All Products</div>';
+
+          if (data.results) {
+            data.results.forEach((category) => {
+              const categoryEl = document.createElement("div");
+              categoryEl.className = "category-item";
+              categoryEl.setAttribute("data-category", category.slug);
+              categoryEl.textContent = category.name;
+              categoryEl.onclick = () => selectCategory(category.slug, categoryEl);
+              categoriesList.appendChild(categoryEl);
+            });
+
+            console.log("✅ Loaded", data.results.length, "categories");
+          }
+        } catch (error) {
+          console.error("❌ Error loading categories:", error);
+          showMessage("Failed to load categories", "error");
+        }
+      }
+
+      function selectCategory(categorySlug, element) {
+        console.log("📂 Selected category:", categorySlug || "All Products");
+
+        // Update UI
+        document.querySelectorAll(".category-item").forEach((el) => el.classList.remove("active"));
+        element.classList.add("active");
+
+        // Load products for this category
+        loadProducts(categorySlug);
+      }
+
+      async function loadProducts(category = "") {
+        console.log("🛍️ Loading products...", category ? `Category: ${category}` : "All products");
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("error-message").style.display = "none";
+
+        try {
+          let url = `${API_BASE}/products/products/`;
+          const params = new URLSearchParams();
+
+          if (category) params.append("category", category);
+
+          const sort = document.getElementById("sort-select").value;
+          if (sort) params.append("ordering", sort);
+
+          const minPrice = document.getElementById("min-price").value;
+          if (minPrice) params.append("price__gte", minPrice);
+
+          const maxPrice = document.getElementById("max-price").value;
+          if (maxPrice) params.append("price__lte", maxPrice);
+
+          const stockFilter = document.getElementById("stock-filter").value;
+          if (stockFilter === "in_stock") params.append("stock_status", "in_stock");
+          if (stockFilter === "featured") params.append("is_featured", "true");
+
+          if (params.toString()) url += "?" + params.toString();
+
+          const response = await fetch(url);
+          const data = await response.json();
+
+          displayProducts(data.results || []);
+
+          console.log("✅ Loaded", (data.results || []).length, "products");
+        } catch (error) {
+          console.error("❌ Error loading products:", error);
+          document.getElementById("error-message").textContent = "Failed to load products";
+          document.getElementById("error-message").style.display = "block";
+        } finally {
+          document.getElementById("loading").style.display = "none";
+        }
+      }
+
+      function displayProducts(products) {
+        const grid = document.getElementById("products-grid");
+
+        if (products.length === 0) {
+          grid.innerHTML =
+            '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #666;">No products found</div>';
+          return;
+        }
+
+        grid.innerHTML = products
+          .map(
+            (product) => `
+                <div class="product-card">
+                    <div class="product-image">📦</div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">KES ${product.price}</div>
+                        <div class="product-category">${
+                          product.main_category || "Uncategorized"
+                        }</div>
+                        <div class="product-actions">
+                            <button class="btn-cart" onclick="addToCart(${product.id}, '${
+              product.name
+            }', ${product.price})">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      async function searchProducts() {
+        const query = document.getElementById("search-input").value.trim();
+        console.log("🔍 Searching for:", query);
+
+        if (!query) {
+          loadProducts();
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/products/products/search/?q=${encodeURIComponent(query)}`
+          );
+          const data = await response.json();
+          displayProducts(data.results || []);
+
+          console.log("✅ Search found", (data.results || []).length, "products");
+        } catch (error) {
+          console.error("❌ Search failed:", error);
+          showMessage("Search failed", "error");
+        }
+      }
+
+      // ===== 4. CART FUNCTIONS =====
+
+      function loadSavedCart() {
+        const savedCart = localStorage.getItem("cart");
+        if (savedCart) {
+          cart = JSON.parse(savedCart);
+          console.log("🛒 Loaded saved cart with", cart.length, "items");
+        }
+      }
+
+      function addToCart(productId, productName, price) {
+        console.log("🛒 Adding to cart:", productName);
+
+        const existingItem = cart.find((item) => item.id === productId);
+
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cart.push({
+            id: productId,
+            name: productName,
+            price: price,
+            quantity: 1,
+          });
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCartSummary();
+        showMessage(`${productName} added to cart!`, "success");
+      }
+
+      function updateCartSummary() {
+        const cartSummary = document.getElementById("cart-summary");
+        const cartItems = document.getElementById("cart-items");
+        const cartTotal = document.getElementById("cart-total");
+
+        const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        if (itemCount > 0) {
+          cartSummary.style.display = "block";
+          cartItems.textContent = `${itemCount} items`;
+          cartTotal.textContent = `Total: KES ${total.toFixed(2)}`;
+        } else {
+          cartSummary.style.display = "none";
+        }
+      }
+
+      function viewCart() {
+        if (!currentUser) {
+          showMessage("Please login to view cart", "error");
+          showLogin();
+          return;
+        }
+
+        if (cart.length === 0) {
+          alert("Your cart is empty");
+          return;
+        }
+
+        const cartSummary = cart
+          .map(
+            (item) =>
+              `${item.name} x${item.quantity} = KES ${(item.price * item.quantity).toFixed(2)}`
+          )
+          .join("\n");
+
+        const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        alert(
+          `Cart Contents:\n\n${cartSummary}\n\nTotal: KES ${total.toFixed(
+            2
+          )}\n\nCheckout coming soon!`
+        );
+      }
+
+      // ===== 5. UTILITY FUNCTIONS =====
+
+      function showMessage(message, type) {
+        console.log(`💬 ${type.toUpperCase()}: ${message}`);
+
+        // Remove existing messages
+        document.querySelectorAll(".floating-message").forEach((el) => el.remove());
+
+        const messageEl = document.createElement("div");
+        messageEl.className = `floating-message ${type}`;
+        messageEl.textContent = message;
+        messageEl.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1001;
+                padding: 1rem 2rem;
+                border-radius: 5px;
+                font-weight: bold;
+                max-width: 90%;
+                text-align: center;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            `;
+
+        if (type === "success") {
+          messageEl.style.backgroundColor = "#d4edda";
+          messageEl.style.color = "#155724";
+          messageEl.style.border = "1px solid #c3e6cb";
+        } else if (type === "error") {
+          messageEl.style.backgroundColor = "#f8d7da";
+          messageEl.style.color = "#721c24";
+          messageEl.style.border = "1px solid #f5c6cb";
+        }
+
+        document.body.appendChild(messageEl);
+
+        setTimeout(() => {
+          if (messageEl.parentNode) {
+            messageEl.parentNode.removeChild(messageEl);
+          }
+        }, 5000);
+      }
+
+      function setupEventListeners() {
+        // Set up all the button click events
+        document.getElementById("login-btn").onclick = showLogin;
+        document.getElementById("register-btn").onclick = showRegister;
+        document.getElementById("logout-btn").onclick = logout;
+
+        // Search on Enter key
+        document.getElementById("search-input").addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            searchProducts();
+          }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById("auth-modal").onclick = function (e) {
+          if (e.target === this) {
+            closeModal();
+          }
+        };
+
+        console.log("🎯 Event listeners set up");
+      }
+
+      // ===== 6. TEST FUNCTIONS (for debugging) =====
+
+      function testAPI() {
+        console.log("🧪 Testing API connection...");
+
+        fetch(`${API_BASE}/products/categories/`)
+          .then((response) => {
+            console.log("📡 API Response Status:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("📄 API Data:", data);
+            if (data.results) {
+              console.log("✅ API is working! Found", data.results.length, "categories");
+            }
+          })
+          .catch((error) => {
+            console.error("❌ API Test Failed:", error);
+            showMessage("Backend connection failed. Check if Django is running.", "error");
+          });
+      }
+
+      // ===== 7. HELPFUL DEBUG COMMANDS =====
+      // You can run these in the browser console (F12) to debug issues
+
+      window.debugInfo = function () {
+        console.log("=== DEBUG INFO ===");
+        console.log("🔑 Auth Token:", authToken ? "Present" : "None");
+        console.log("👤 Current User:", currentUser);
+        console.log("🛒 Cart Items:", cart.length);
+        console.log("🌐 API Base:", API_BASE);
+        console.log("==================");
+      };
+
+      window.testLogin = function () {
+        console.log("🧪 Testing login with demo account...");
+        fetch(`${API_BASE}/auth/customers/login/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: "demo@example.com",
+            password: "demo123",
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("📄 Login Test Result:", data);
+            if (data.access_token) {
+              console.log("✅ Login test successful!");
+            } else {
+              console.log("❌ Login test failed:", data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("❌ Login test error:", error);
+          });
+      };
+
+      // Test API connection when page loads
+      setTimeout(testAPI, 1000);
+    </script>
+  </body>
+</html>
