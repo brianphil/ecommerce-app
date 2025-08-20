@@ -44,7 +44,7 @@ A comprehensive Django-based e-commerce backend system with hierarchical product
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/your-username/ecommerce-backend.git
+   git clone https://github.com/brianphil/ecommerce-app.git
    cd ecommerce-backend
    ```
 
@@ -407,7 +407,7 @@ For support and questions:
 
 - Create an issue in the GitHub repository
 - Email: support@yourstore.com
-- Documentation: [Project Wiki](https://github.com/your-username/ecommerce-backend/wiki)
+- Documentation: [Project Wiki](https://github.com/brianphil/ecommerce-backend/wiki)
 
 ## Acknowledgments
 
